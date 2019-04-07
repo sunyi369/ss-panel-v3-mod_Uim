@@ -67,6 +67,8 @@ $app->add(new WhoopsMiddleware);
 
 
 // Home
+$app->post('/spay_back', 'App\Services\Payment:notify');
+$app->get('/spay_back', 'App\Services\Payment:notify');
 $app->get('/', 'App\Controllers\HomeController:index');
 $app->get('/indexold', 'App\Controllers\HomeController:indexold');
 $app->get('/404', 'App\Controllers\HomeController:page404');
@@ -149,10 +151,10 @@ $app->group('/user', function () {
     $this->post('/gaset', 'App\Controllers\UserController:GaSet');
     $this->get('/gareset', 'App\Controllers\UserController:GaReset');
     $this->get('/telegram_reset', 'App\Controllers\UserController:telegram_reset');
+    $this->get('/discord_reset', 'App\Controllers\UserController:discord_reset');
     $this->post('/resetport', 'App\Controllers\UserController:ResetPort');
     $this->post('/specifyport', 'App\Controllers\UserController:SpecifyPort');
     $this->post('/pacset', 'App\Controllers\UserController:PacSet');
-    $this->get('/getiosconf', 'App\Controllers\UserController:GetIosConf');
     $this->post('/unblock', 'App\Controllers\UserController:Unblock');
     $this->get('/bought', 'App\Controllers\UserController:bought');
     $this->delete('/bought', 'App\Controllers\UserController:deleteBoughtGet');
@@ -293,6 +295,8 @@ $app->group('/admin', function () {
     $this->delete('/user', 'App\Controllers\Admin\UserController:delete');
     $this->post('/user/changetouser', 'App\Controllers\Admin\UserController:changetouser');
     $this->post('/user/ajax', 'App\Controllers\Admin\UserController:ajax');
+    $this->post('/user/create', 'App\Controllers\Admin\UserController:createNewUser');
+    $this->post('/user/buy', 'App\Controllers\Admin\UserController:buy');
 
 
     $this->get('/coupon', 'App\Controllers\AdminController:coupon');
@@ -373,12 +377,15 @@ $app->group("/doiam", function () {
 $app->get('/logout', 'App\Controllers\VueController:vuelogout');
 $app->get('/globalconfig', 'App\Controllers\VueController:getGlobalConfig');
 $app->get('/getuserinfo', 'App\Controllers\VueController:getUserInfo');
-$app->get('/getuserinviteinfo', 'App\Controllers\VueController:getUserInviteInfo');
+$app->post('/getuserinviteinfo', 'App\Controllers\VueController:getUserInviteInfo');
 $app->get('/getusershops', 'App\Controllers\VueController:getUserShops');
 $app->get('/getallresourse', 'App\Controllers\VueController:getAllResourse');
 $app->get('/getnewsubtoken', 'App\Controllers\VueController:getNewSubToken');
 $app->get('/getnewinvotecode', 'App\Controllers\VueController:getNewInviteCode');
 $app->get('/gettransfer', 'App\Controllers\VueController:getTransfer');
+$app->get('/getCaptcha', 'App\Controllers\VueController:getCaptcha');
+$app->post('/getChargeLog', 'App\Controllers\VueController:getChargeLog');
+$app->get('/getnodelist', 'App\Controllers\VueController:getNodeList');
 
 /**
  * chenPay
