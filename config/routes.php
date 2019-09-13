@@ -9,17 +9,11 @@ use App\Middleware\Mu;
 use App\Middleware\Mod_Mu;
 use Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware;
 
-// config
-$debug = false;
-if (defined('DEBUG')) {
-    $debug = true;
-}
-
 $configuration = [
     'settings' => [
-        'debug' => $debug,
+        'debug' => DEBUG,
         'whoops.editor' => 'sublime',
-        'displayErrorDetails' => $debug
+        'displayErrorDetails' => DEBUG
     ]
 ];
 
@@ -42,7 +36,7 @@ $container['notAllowedHandler'] = static function ($c) {
     };
 };
 
-if ($debug == false) {
+if (DEBUG == false) {
     $container['errorHandler'] = static function ($c) {
         return static function ($request, $response, $exception) use ($c) {
             return $response->withAddedHeader('Location', '/500');

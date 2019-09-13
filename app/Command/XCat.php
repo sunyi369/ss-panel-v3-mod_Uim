@@ -174,7 +174,7 @@ class XCat
 
     public function initdownload()
     {
-        system('git clone https://github.com/xcxnig/ssr-download.git ' . BASE_PATH . '/public/ssr-download/', $ret);
+        system('git clone --depth=3 https://github.com/xcxnig/ssr-download.git ' . BASE_PATH . '/public/ssr-download/ && git gc', $ret);
         echo $ret;
     }
 
@@ -258,22 +258,32 @@ class XCat
     public function setTelegram()
     {
         $bot = new BotApi(Config::get('telegram_token'));
-        if ($bot->setWebhook(Config::get('baseUrl') . '/telegram_callback?token=' . Config::get('telegram_request_token')) == 1) {
+        $ch= curl_init();
+        curl_setopt ($ch, CURLOPT_URL, sprintf('https://api.telegram.org/bot%s/deleteWebhook', Config::get('telegram_token')));
+        curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        $deleteWebhookReturn = json_decode(curl_exec($ch));
+        curl_close($ch);
+        if ($deleteWebhookReturn->ok && $deleteWebhookReturn->result && $bot->setWebhook(Config::get('baseUrl') . '/telegram_callback?token=' . Config::get('telegram_request_token')) == 1) {
             echo('设置成功！' . PHP_EOL);
         }
     }
 
     public function initQQWry()
     {
-        echo('downloading....');
-        $qqwry = file_get_contents('https://qqwry.mirror.noc.one/QQWry.Dat');
+        echo('开始下载纯真 IP 数据库....');
+        $qqwry = file_get_contents('https://qqwry.mirror.noc.one/QQWry.Dat?from=sspanel_uim');
         if ($qqwry != '') {
             $fp = fopen(BASE_PATH . '/storage/qqwry.dat', 'wb');
             if ($fp) {
                 fwrite($fp, $qqwry);
                 fclose($fp);
+                echo('纯真 IP 数据库下载成功！');
+            } else {
+                echo('纯真 IP 数据库保存失败！');
             }
-            echo('finish....');
+        } else {
+            echo('下载失败！请重试，或在 https://github.com/SukkaW/qqwry-mirror/issues/new 反馈！');
         }
     }
 
@@ -282,12 +292,33 @@ class XCat
         $bot = new BotApi(Config::get('telegram_token'));
         $users = User::where('telegram_id', '>', 0)->get();
         foreach ($users as $user) {
-            $reply_message = '您当前的流量状况：
-今日已使用 ' . $user->TodayusedTraffic() . ' ' . number_format(($user->u + $user->d - $user->last_day_t) / $user->transfer_enable * 100, 2) . '%
-今日之前已使用 ' . $user->LastusedTraffic() . ' ' . number_format($user->last_day_t / $user->transfer_enable * 100, 2) . '%
-未使用 ' . $user->unusedTraffic() . ' ' . number_format(($user->transfer_enable - ($user->u + $user->d)) / $user->transfer_enable * 100, 2) . '%
-					                        ';
-            $bot->sendMessage($user->get_user_attributes('telegram_id'), $reply_message, $parseMode = null, $disablePreview = false, $replyToMessageId = null);
+            $u = $user->u;
+            $d = $user->d;
+            $last_day_t = $user->last_day_t;
+            $transfer_enable = $user->transfer_enable;
+            $reply_message = '您当前的流量状况：' . PHP_EOL .
+                sprintf(
+                    '今天已使用 %s %s%%',
+                    $user->TodayusedTraffic(),
+                    number_format(($u + $d - $last_day_t) / $transfer_enable * 100, 2)
+                ) . PHP_EOL .
+                sprintf(
+                    '今天前已使用 %s %s%%',
+                    $user->LastusedTraffic(),
+                    number_format($last_day_t / $transfer_enable * 100, 2)
+                ) . PHP_EOL .
+                sprintf(
+                    '剩余 %s %s%%',
+                    $user->unusedTraffic(),
+                    number_format(($transfer_enable - ($u + $d)) / $transfer_enable * 100, 2)
+                );
+            $bot->sendMessage(
+                $user->get_user_attributes('telegram_id'),
+                $reply_message,
+                $parseMode = null,
+                $disablePreview = false,
+                $replyToMessageId = null
+            );
         }
     }
 
@@ -303,7 +334,7 @@ class XCat
     {
         if (count($this->argv) === 3) {
             $user = User::find($this->argv[2]);
-            $expire_in = 3600 + time();
+            $expire_in = 86400 + time();
             echo Hash::cookieHash($user->pass, $expire_in) . ' ' . $expire_in;
         }
     }
